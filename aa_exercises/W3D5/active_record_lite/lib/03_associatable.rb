@@ -20,13 +20,37 @@ end
 
 class BelongsToOptions < AssocOptions
   def initialize(name, options = {})
-    # ...
+    self.class_eval do
+      define_method(:primary_key) do
+        options[:primary_key] || :id
+      end
+
+      define_method(:foreign_key) do
+        options[:foreign_key] || "#{name}_id".to_sym
+      end
+
+      define_method(:class_name) do
+        options[:class_name] || "#{name}".camelcase
+      end
+    end
   end
 end
 
 class HasManyOptions < AssocOptions
   def initialize(name, self_class_name, options = {})
-    # ...
+    self.class_eval do
+      define_method(:primary_key) do
+        options[:primary_key] || :id
+      end
+
+      define_method(:foreign_key) do
+        options[:foreign_key] || "#{self_class_name}_id".downcase.to_sym
+      end
+
+      define_method(:class_name) do
+        options[:class_name] || "#{name}".camelcase.singularize
+      end
+    end
   end
 end
 
