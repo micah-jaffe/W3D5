@@ -37,7 +37,7 @@ class SQLObject
       FROM
         #{self.table_name}
     SQL
-    
+
     parse_all(data)
   end
 
@@ -46,7 +46,16 @@ class SQLObject
   end
 
   def self.find(id)
-    # ...
+    data = DBConnection.execute(<<-SQL, id)
+      SELECT
+        *
+      FROM
+        #{self.table_name}
+      WHERE
+        id = ?
+    SQL
+
+    data.empty? ? nil : parse_all(data).first
   end
 
   def initialize(params = {})
@@ -64,11 +73,22 @@ class SQLObject
   end
 
   def attribute_values
-    # ...
+    attributes.values
   end
 
   def insert
-    # ...
+    cols = self.class.columns.drop(1) # don't need id
+    col_names = cols.join(', ')
+    question_marks = (['?'] * cols.length).join(', ')
+
+    data = DBConnection.execute(<<-SQL, *attribute_values)
+      INSERT INTO
+        #{self.class.table_name} (#{col_names})
+      VALUES
+        (#{question_marks})
+    SQL
+
+    self.id = DBConnection.last_insert_row_id
   end
 
   def update
