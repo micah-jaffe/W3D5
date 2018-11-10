@@ -10,11 +10,11 @@ class AssocOptions
   )
 
   def model_class
-    # ...
+    self.class_name.constantize
   end
 
   def table_name
-    # ...
+    self.model_class.table_name
   end
 end
 
@@ -57,11 +57,27 @@ end
 module Associatable
   # Phase IIIb
   def belongs_to(name, options = {})
-    # ...
+    options = BelongsToOptions.new(name, options)
+
+    define_method(name) do
+      parent_class = options.model_class
+      primary_key = self.send(options.primary_key)
+      foreign_key = self.send(options.foreign_key)
+
+      parent_class.where(primary_key => foreign_key).first
+    end
   end
 
   def has_many(name, options = {})
-    # ...
+    options = HasManyOptions.new(name, self.name, options)
+
+    define_method("#{name}".pluralize) do
+      child_class = options.model_class
+      primary_key = self.send(options.primary_key)
+      foreign_key = options.foreign_key
+
+      child_class.where(foreign_key => primary_key)
+    end
   end
 
   def assoc_options
@@ -70,5 +86,6 @@ module Associatable
 end
 
 class SQLObject
-  # Mixin Associatable here...
+  extend Associatable
+  extend Searchable
 end
